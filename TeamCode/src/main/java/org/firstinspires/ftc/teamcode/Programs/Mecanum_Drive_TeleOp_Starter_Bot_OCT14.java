@@ -116,13 +116,22 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     telemetry.addData("Shooter Velocity Target", shooterTargetRPM);
 
     //this is for the servos on the side of the intake
-    if(gamepad1.a){
+    if(gamepad1.left_trigger>0.1){
         rightIntakeServo.setPosition(1);
         leftIntakeServo.setPosition(1);
     }else{
         rightIntakeServo.setPosition(0);
         leftIntakeServo.setPosition(0);
     }
+
+    //this is for the transfer servo
+    if(gamepad1.a){
+        transferServo.setPosition(1);
+
+    }else{
+        transferServo.setPosition(0);
+    }
+
 
     //Controls Intake Motor
     if(gamepad1.x){
