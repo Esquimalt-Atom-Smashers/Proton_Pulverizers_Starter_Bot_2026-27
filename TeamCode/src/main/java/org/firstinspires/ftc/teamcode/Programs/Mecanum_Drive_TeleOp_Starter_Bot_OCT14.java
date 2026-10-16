@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.Programs;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -11,6 +13,7 @@ import com.sun.tools.javac.main.Option;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
+@TeleOp
 public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
 
     private DcMotor frontRightMotor, frontLeftMotor, rearRightMotor, rearLeftMotor;
@@ -19,8 +22,8 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
 
     private DcMotorEx shooterMotor;
 
-    private Servo rightIntakeServo, leftIntakeServo;
-    private Servo transferServo;
+    private CRServo rightIntakeServo, leftIntakeServo;
+    private CRServo transferServo;
 
     private IMU imu;
 
@@ -34,23 +37,23 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         frontRightMotor = hardwareMap.get(DcMotor.class, "frontRightMotor");
         frontLeftMotor = hardwareMap.get(DcMotor.class, "frontLeftMotor");
         rearRightMotor = hardwareMap.get(DcMotor.class, "rearRightMotor");
-        rearLeftMotor = hardwareMap.get(DcMotor.class, "rearRightMotor");
+        rearLeftMotor = hardwareMap.get(DcMotor.class, "rearLeftMotor");
 
         shooterMotor = hardwareMap.get(DcMotorEx.class, "shooterMotor");
         intakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
 
-        rightIntakeServo = hardwareMap.get(Servo.class, "rightIntakeServo");
-        leftIntakeServo = hardwareMap.get(Servo.class, "leftIntakeServo");
-        transferServo = hardwareMap.get(Servo.class, "transferServo");
+        rightIntakeServo = hardwareMap.get(CRServo.class, "frontRightServo");
+        leftIntakeServo = hardwareMap.get(CRServo.class, "frontLeftServo");
+        transferServo = hardwareMap.get(CRServo.class, "shooterServo");
 
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rearLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         shooterMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        rightIntakeServo.setDirection(Servo.Direction.FORWARD);
-        leftIntakeServo.setDirection(Servo.Direction.FORWARD);
-        transferServo.setDirection(Servo.Direction.FORWARD);
+        rightIntakeServo.setDirection(CRServo.Direction.FORWARD);
+        leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
+        transferServo.setDirection(CRServo.Direction.FORWARD);
 
         frontRightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frontLeftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -59,6 +62,8 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
 
         shooterMotor.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
 
 
 
@@ -81,7 +86,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     public void loop() {
 
     double y  = -gamepad1.left_stick_y;
-    double x  =  gamepad1.left_stick_x;
+    double x  = gamepad1.left_stick_x;
     double rx =  gamepad1.right_stick_x;
 
     double speed = gamepad1.right_bumper ? 0.4 : 1.0; // slow mode
@@ -89,8 +94,8 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         if (gamepad1.options || gamepad1.back) {
         imu.resetYaw();
     }
-
-    double botHeading = getHeadingRadians();
+    double botHeading = 0;
+    botHeading = getHeadingRadians();
 
     // Rotate the translation vector by -heading
     double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
@@ -117,20 +122,15 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
 
     //this is for the servos on the side of the intake
     if(gamepad1.left_trigger>0.1){
-        rightIntakeServo.setPosition(1);
-        leftIntakeServo.setPosition(1);
+        rightIntakeServo.setPower(1);
+        leftIntakeServo.setPower(1);
     }else{
-        rightIntakeServo.setPosition(0);
-        leftIntakeServo.setPosition(0);
+        rightIntakeServo.setPower(0);
+        leftIntakeServo.setPower(0);
     }
 
     //this is for the transfer servo
-    if(gamepad1.a){
-        transferServo.setPosition(1);
-
-    }else{
-        transferServo.setPosition(0);
-    }
+    transferServo.setPower(gamepad1.right_trigger);
 
 
     //Controls Intake Motor
@@ -140,7 +140,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         intakeMotor.setPower(gamepad1.left_trigger);
     }
 
-    shooterTargetTPS = (shooterTargetRPM/60)*28;
+    shooterTargetTPS = (shooterTargetRPM/28)*60;
 
     //Start and Stop of Shooter Motor
     if(gamepad1.right_bumper){
@@ -158,7 +158,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         shooterTargetRPM = shooterTargetRPM - 200;
     }
 
-    shooterActualRPM = (shooterMotor.getVelocity()/28)*60;
+    shooterActualRPM = (shooterMotor.getVelocity(  ));
 
     telemetry.addData("Shooter Actual RPM", shooterActualRPM);
 }
@@ -171,9 +171,9 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     rearRightMotor.setPower(0);
     intakeMotor.setPower(0);
     shooterMotor.setPower(0);
-    rightIntakeServo.setPosition(0);
-    leftIntakeServo.setPosition(0);
-    transferServo.setPosition(0);
+    rightIntakeServo.setPower(0);
+    leftIntakeServo.setPower(  0);
+
     }
 
     private double getHeadingRadians() {
