@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Programs;
 
+import static com.sun.tools.doclint.Entity.and;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -31,6 +33,11 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     private double shooterTargetTPS;
 
     private double shooterActualRPM;
+
+    private static double shooterMaxRPM = 3000;
+
+    boolean intake = false;
+    boolean lastDpadUp = false;
 
     @Override
     public void init() {
@@ -80,10 +87,15 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
         shooterTargetRPM = 3000;
+
+
     }
 
     @Override
     public void loop() {
+        if(gamepad1.back){
+            imu.resetYaw();
+        }
 
     double y  = -gamepad1.left_stick_y;
     double x  = gamepad1.left_stick_x;
@@ -121,7 +133,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     telemetry.addData("Shooter Velocity Target", shooterTargetRPM);
 
     //this is for the servos on the side of the intake
-    if(gamepad1.left_trigger>0.1){
+    if(gamepad1.a){
         rightIntakeServo.setPower(1);
         leftIntakeServo.setPower(1);
     }else{
@@ -131,34 +143,52 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
 
     //this is for the transfer servo
     transferServo.setPower(gamepad1.right_trigger);
+    shooterTargetTPS = (shooterTargetRPM/28)*60;
+    shooterMotor.setVelocity(shooterTargetTPS);
+
+        boolean dpadUp = gamepad1.dpad_up;
+
+        // Only trigger on the press (false -> true), not while held
+        if (dpadUp && !lastDpadUp) {
+            shooterTargetRPM = Math.min(shooterTargetRPM + 200, shooterMaxRPM);
+        }
+        lastDpadUp = dpadUp;
+
+        boolean dpaddown = gamepad1.dpad_up;
+
+        // Only trigger on the press (false -> true), not while held
+        if (dpadUp && !lastDpadUp) {
+            shooterTargetRPM = Math.min(shooterTargetRPM - 200, shooterMaxRPM);
+        }
+        lastDpadUp = dpadUp;
 
 
     //Controls Intake Motor
-    if(gamepad1.x){
+    if(gamepad1.a){
+        intakeMotor.setPower(1);
+
+    }else if(gamepad1.x){
         intakeMotor.setPower(-1);
-    }else{
-        intakeMotor.setPower(gamepad1.left_trigger);
-    }
-
-    shooterTargetTPS = (shooterTargetRPM/28)*60;
-
-    //Start and Stop of Shooter Motor
-    if(gamepad1.right_bumper){
-        shooterMotor.setVelocity(shooterTargetTPS);
     }else {
-        shooterMotor.setVelocity(0);
+        intakeMotor.setPower(0);
     }
+
+
+
+
+
 
     //Controls for setting Shooter Target RPM
     if(gamepad1.dpad_up){
         shooterTargetRPM = shooterTargetRPM + 200;
+
     }
 
     if(gamepad1.dpad_down){
         shooterTargetRPM = shooterTargetRPM - 200;
     }
 
-    shooterActualRPM = (shooterMotor.getVelocity(  ));
+    shooterActualRPM = ((shooterMotor.getVelocity()/60)*28);
 
     telemetry.addData("Shooter Actual RPM", shooterActualRPM);
 }
@@ -172,7 +202,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     intakeMotor.setPower(0);
     shooterMotor.setPower(0);
     rightIntakeServo.setPower(0);
-    leftIntakeServo.setPower(  0);
+    leftIntakeServo.setPower(0);
 
     }
 
