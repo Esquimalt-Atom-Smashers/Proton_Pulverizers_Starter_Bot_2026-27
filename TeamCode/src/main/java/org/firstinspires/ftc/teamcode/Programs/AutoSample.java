@@ -30,6 +30,9 @@ public class AutoSample extends OpMode {
         frontRightMotor.setPower(0.5);
         rearLeftMotor.setPower((-0.5));
         rearRightMotor.setPower(0.5);
+
+
+        
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
