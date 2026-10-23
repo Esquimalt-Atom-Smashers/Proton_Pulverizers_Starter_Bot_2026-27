@@ -36,7 +36,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     //These are all the variables for the PIDF For the FlyWheel
     static final double TICKS_PER_REV = 28.0;
     static final double MAX_RPM = 6000.0;
-    static final double MAX_TPS = MAX_RPM * TICKS_PER_REV / 60.0; // 2800
+    static final double MAX_TPS = MAX_RPM / 60 * TICKS_PER_REV; // 2800
     static final double NOMINAL_VOLTS = 12.0;
 
     // ---- Gains: edit these and redeploy ----
@@ -82,7 +82,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rearLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        shooterMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        shooterMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         rightIntakeServo.setDirection(CRServo.Direction.FORWARD);
         leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
@@ -180,7 +180,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         timer.reset();
         if (dt <= 0) dt = 1e-3;
 
-        double targetTPS = targetRPM * TICKS_PER_REV / 60.0;
+        double targetTPS = targetRPM / 60.0 * TICKS_PER_REV;
         double velTPS = shooterMotor.getVelocity();
         double error = targetTPS - velTPS;
 
@@ -217,32 +217,36 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
 
 
 //Below Here is the Old Open Loop Controls for the FlyWheel
-    //    telemetry.addData("Shooter Velocity Target", shooterTargetRPM);
-//
-//    //this is for the servos on the side of the intake
-//    if(gamepad1.left_trigger>0.1){
-//        rightIntakeServo.setPosition(1);
-//        leftIntakeServo.setPosition(1);
-//    }else{
-//        rightIntakeServo.setPosition(0);
-//        leftIntakeServo.setPosition(0);
-//    }
-//
-//    //this is for the transfer servo
-//    if(gamepad1.a){
-//        transferServo.setPosition(1);
-//
-//    }else{
-//        transferServo.setPosition(0);
-//    }
-//
-//
-//    //Controls Intake Motor
-//    if(gamepad1.x){
-//        intakeMotor.setPower(-1);
-//    }else{
-//        intakeMotor.setPower(gamepad1.left_trigger);
-//    }
+        //telemetry.addData("Shooter Velocity Target", shooterTargetRPM);
+
+    //this is for the servos on the side of the intake
+    if(gamepad1.left_trigger>0.1){
+        rightIntakeServo.setPower(1);
+        leftIntakeServo.setPower(1);
+    }else{
+        rightIntakeServo.setPower(0);
+        leftIntakeServo.setPower(0);
+    }
+
+    //this is for the transfer servo
+    if(gamepad1.right_bumper){
+        transferServo.setPower(1);
+
+    }else if(gamepad1.right_bumper){
+        transferServo.setPower(-1);
+    } else {
+        transferServo.setPower(0);
+    }
+
+
+    //Controls Intake Motor
+    if(gamepad1.x){
+        intakeMotor.setPower(-1);
+    }else{
+        intakeMotor.setPower(gamepad1.left_trigger);
+    }
+
+
 //
 //    shooterTargetTPS = (shooterTargetRPM/60)*28;
 //
