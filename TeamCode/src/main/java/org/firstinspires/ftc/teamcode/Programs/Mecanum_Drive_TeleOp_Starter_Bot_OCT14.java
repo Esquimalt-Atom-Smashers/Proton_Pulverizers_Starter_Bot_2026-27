@@ -34,7 +34,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
 
     private double shooterActualRPM;
 
-    private static double shooterMaxRPM = 3000;
+    private static double shooterMaxRPM = 1200;
 
     boolean intake = false;
     boolean lastDpadUp = false;
@@ -144,9 +144,23 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     }
 
     //this is for the transfer servo
-    transferServo.setPower(gamepad1.right_trigger);
+        if(gamepad1.right_bumper){
+            transferServo.setPower(1);
+        } else if (gamepad1.left_bumper) {
+            transferServo.setPower(-1);
+        } else{
+            transferServo.setPower(0);
+        }
+
+
+
     shooterTargetTPS = (shooterTargetRPM/28)*60;
-    shooterMotor.setVelocity(shooterTargetTPS);
+
+    if(gamepad1.right_trigger>0.1){
+        shooterMotor.setVelocity(shooterTargetTPS);
+    }else{
+        shooterMotor.setVelocity(0);
+    }
 
         boolean dpadUp = gamepad1.dpad_up;
 
@@ -163,11 +177,11 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         if (dpadDown && !lastDpadDown) {
             shooterTargetRPM = Math.min(shooterTargetRPM - 200, shooterMaxRPM);
         }
-        boolean lastDpaddown = dpadDown;
+        lastDpadDown = dpadDown;
 
 
-    //Controls Intake Motor
-    if(gamepad1.a){
+    //Controls Intake
+    if(gamepad1.left_trigger>0.4){
         intakeMotor.setPower(1);
 
     }else if(gamepad1.x){
