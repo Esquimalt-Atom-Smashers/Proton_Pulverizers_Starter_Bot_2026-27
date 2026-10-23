@@ -44,7 +44,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     public static double kP = 0.00060; // Proportional gain
 
 
-    static final double RPM_STEP = 100;
+    static final double RPM_STEP = 50;
 
     private VoltageSensor battery;
     private final ElapsedTime timer = new ElapsedTime();
