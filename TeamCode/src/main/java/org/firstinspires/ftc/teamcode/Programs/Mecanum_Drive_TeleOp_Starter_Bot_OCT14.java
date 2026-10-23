@@ -40,30 +40,23 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     static final double NOMINAL_VOLTS = 12.0;
 
     // ---- Gains: edit these and redeploy ----
-    static final double kP = 0.001;
-    static final double kI = 0.001;
-    static final double kD = 0.001;
-    static final double kV = 0.001 / MAX_TPS; // ~0.000357
-    static final double kS = 0.001;
+    public static double kF = 0.00038; // Feedforward gain
+    public static double kP = 0.00060; // Proportional gain
 
-    static final double I_CLAMP = 0.2;       // max power from the I term
+
     static final double RPM_STEP = 100;
 
     private VoltageSensor battery;
     private final ElapsedTime timer = new ElapsedTime();
 
-    private double targetRPM = 0;
-    private double integral = 0;
-    private double lastError = 0;
+    private double targetRPM = 1200;
+    private double targetTPS;
+
 
     private boolean lastUp = false;
     private boolean lastDown = false;
 
-//    private double shooterTargetRPM;
-//    private double shooterTargetTPS;
-//
-//    private double shooterActualRPM;
-    //shooterTargetRPM = 3000;
+
 
     @Override
     public void init() {
@@ -82,7 +75,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         rearLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        shooterMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooterMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         rightIntakeServo.setDirection(CRServo.Direction.FORWARD);
         leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
@@ -132,11 +125,29 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
         boolean down = gamepad1.dpad_down;
 
         if (up && !lastUp)     targetRPM = Math.min(MAX_RPM, targetRPM + RPM_STEP);
-        if (down && !lastDown) targetRPM = Math.max(0, targetRPM - RPM_STEP);
-        if (gamepad1.x)        targetRPM = 0;
+        if (down && !lastDown) targetRPM = Math.max(0.0  , targetRPM - RPM_STEP);
+
+        targetTPS = targetRPM / 60 * TICKS_PER_REV;
 
         lastUp = up;
         lastDown = down;
+
+        // Target velocity in encoder counts per second
+        double targetTicksPerSec = (targetRPM / 60.0) * TICKS_PER_REV;
+
+        // Current speed readings
+        double currentTicksPerSec = shooterMotor.getVelocity();
+        double currentRpm = (currentTicksPerSec / 60) * TICKS_PER_REV;
+
+        // PF algorithm math
+        double error = targetTicksPerSec - currentTicksPerSec;
+        double feedForward = kF * targetTicksPerSec;
+        double proportional = kP * error;
+
+        // Prevent reversing by clamping lower bound to 0.0
+        double commandedPower = Range.clip(feedForward + proportional, 0.0, 1.0);
+        shooterMotor.setPower(commandedPower);
+
 
 
     //Field Centric Code
@@ -145,7 +156,6 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     double rx =  gamepad1.right_stick_x;
 
     double speed = gamepad1.right_bumper ? 0.4 : 1.0; // slow mode
-
         if (gamepad1.options || gamepad1.back) {
         imu.resetYaw();
     }
@@ -174,46 +184,16 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     telemetry.addData("FL/FR", "%.2f / %.2f", flPower, frPower);
     telemetry.addData("BL/BR", "%.2f / %.2f", blPower, brPower);
 
-        //This is the PIDF for the Flywheel
-        // ---- PIDF control ----
-        double dt = timer.seconds();
-        timer.reset();
-        if (dt <= 0) dt = 1e-3;
 
-        double targetTPS = targetRPM / 60.0 * TICKS_PER_REV;
-        double velTPS = shooterMotor.getVelocity();
-        double error = targetTPS - velTPS;
-
-        if (targetRPM == 0) {
-            integral = 0;
-            shooterMotor.setPower(0);
-        } else {
-            integral += error * dt;
-            if (kI > 0) integral = Range.clip(integral, -I_CLAMP / kI, I_CLAMP / kI);
-            double derivative = (error - lastError) / dt;
-
-            double ff = kV * targetTPS + kS;
-            double pid = kP * error + kI * integral + kD * derivative;
-
-            double comp = NOMINAL_VOLTS / battery.getVoltage();
-            shooterMotor.setPower(Range.clip((ff + pid) * comp, 0, 1));
-        }
-        lastError = error;
 
         // ---- Telemetry ----
-        double actualRPM = velTPS * 60.0 / TICKS_PER_REV;
+        double actualRPM = (shooterMotor.getVelocity() / 60.0) * TICKS_PER_REV;
         telemetry.addData("Target RPM", "%.0f", targetRPM);
         telemetry.addData("Actual RPM", "%.0f", actualRPM);
         telemetry.addData("Error RPM", "%.0f", targetRPM - actualRPM);
         telemetry.addData("Power", "%.3f", shooterMotor.getPower());
         telemetry.addData("Battery", "%.2f V", battery.getVoltage());
-        telemetry.addData("Gains", "kP=%.6f kV=%.7f kI=%.6f kD=%.6f", kP, kV, kI, kD);
         telemetry.update();
-
-
-
-
-
 
 
 //Below Here is the Old Open Loop Controls for the FlyWheel
@@ -232,7 +212,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     if(gamepad1.right_bumper){
         transferServo.setPower(1);
 
-    }else if(gamepad1.right_bumper){
+    }else if(gamepad1.left_bumper){
         transferServo.setPower(-1);
     } else {
         transferServo.setPower(0);
@@ -247,28 +227,6 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     }
 
 
-//
-//    shooterTargetTPS = (shooterTargetRPM/60)*28;
-//
-//    //Start and Stop of Shooter Motor
-//    if(gamepad1.right_bumper){
-//        shooterMotor.setVelocity(shooterTargetTPS);
-//    }else {
-//        shooterMotor.setVelocity(0);
-//    }
-//
-//    //Controls for setting Shooter Target RPM
-//    if(gamepad1.dpad_up){
-//        shooterTargetRPM = shooterTargetRPM + 200;
-//    }
-//
-//    if(gamepad1.dpad_down){
-//        shooterTargetRPM = shooterTargetRPM - 200;
-//    }
-//
-//    shooterActualRPM = (shooterMotor.getVelocity()/28)*60;
-//
-//    telemetry.addData("Shooter Actual RPM", shooterActualRPM);
 }
 
     @Override
