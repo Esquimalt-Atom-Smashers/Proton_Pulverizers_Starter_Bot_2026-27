@@ -34,7 +34,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
 
     private double shooterActualRPM;
 
-    private static double shooterMaxRPM = 1200;
+    private static double shooterMaxRPM = 5000;
 
     boolean intake = false;
     boolean lastDpadUp = false;
@@ -88,7 +88,7 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
                 RevHubOrientationOnRobot(logoDirection, usbDirection);
         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
-        shooterTargetRPM = 3000;
+        shooterTargetRPM = 1200;
 
 
     }
