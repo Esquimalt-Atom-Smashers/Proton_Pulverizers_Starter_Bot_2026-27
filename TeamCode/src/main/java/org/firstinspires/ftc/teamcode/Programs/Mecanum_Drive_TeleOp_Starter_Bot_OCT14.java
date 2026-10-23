@@ -40,11 +40,11 @@ public class Mecanum_Drive_TeleOp_Starter_Bot_OCT14 extends OpMode {
     static final double NOMINAL_VOLTS = 12.0;
 
     // ---- Gains: edit these and redeploy ----
-    static final double kP = 0.0008;
-    static final double kI = 0.0;
-    static final double kD = 0.0;
-    static final double kV = 0.00038 / MAX_TPS; // ~0.000357
-    static final double kS = 0.0;
+    static final double kP = 0.001;
+    static final double kI = 0.001;
+    static final double kD = 0.001;
+    static final double kV = 0.001 / MAX_TPS; // ~0.000357
+    static final double kS = 0.001;
 
     static final double I_CLAMP = 0.2;       // max power from the I term
     static final double RPM_STEP = 100;
